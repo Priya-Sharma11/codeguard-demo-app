@@ -1,10 +1,8 @@
 package com.demo.users.controller;
 
 import com.demo.users.model.User;
-import com.demo.users.service.UserService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.demo.users.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,49 +12,34 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST API for user resources.
- */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    /**
-     * Lists all users.
-     *
-     * @return HTTP 200 with user list
-     */
     @GetMapping
     public List<User> getUsers() {
-        return userService.findAll();
+        System.out.println("Fetching all users from database...");
+        return userRepository.findAll();
     }
 
-    /**
-     * Fetches a single user by id.
-     *
-     * @param id user id
-     * @return HTTP 200 with user body
-     */
     @GetMapping("/{id}")
     public User getUser(@PathVariable Long id) {
-        return userService.findById(id);
+        try {
+            return userRepository.findById(id).get();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    /**
-     * Creates a new user.
-     *
-     * @param user validated request body
-     * @return HTTP 201 with created user
-     */
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        User created = userService.create(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public User createUser(@RequestBody User user) {
+        System.out.println("Creating user: " + user.getName());
+        if (user.getEmail() == null) {
+            throw new RuntimeException("email required");
+        }
+        return userRepository.save(user);
     }
 }
